@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -77,6 +79,64 @@ func main() {
 				fmt.Fprint(w, "Task added")
 			}
 		}
+	})
+
+	http.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
+		todoId, err := strconv.Atoi(strings.Split(r.RequestURI, "/")[2])
+
+		if err != nil {
+			fmt.Printf("Error while parsing request URL: %v", err)
+			return
+		}
+
+		if r.Method == "PUT" {
+			if b, err := io.ReadAll(r.Body); err == nil {
+				var todo Todo
+				todo.Id = int64(todoId)
+				json.Unmarshal(b, &todo)
+
+				res, err := db.Exec("UPDATE todos SET name = $1, complete = $2 WHERE id = $3", todo.Name, todo.Complete, todo.Id)
+
+				if err != nil {
+					fmt.Printf("Error while editing todo: %v", err)
+					return
+				}
+
+				rowsAffected, err := res.RowsAffected()
+
+				if err != nil {
+					fmt.Printf("Error while getting affected rows: %v", err)
+					return
+				}
+
+				if rowsAffected == 1 {
+					fmt.Fprint(w, "Task edited")
+				} else {
+					fmt.Fprintf(w, "There is no task with id %v", todoId)
+				}
+			}
+		} else if r.Method == "DELETE" {
+			res, err := db.Exec("DELETE FROM todos WHERE id = $1", todoId)
+
+			if err != nil {
+				fmt.Printf("Error while deleting todo: %v", err)
+				return
+			}
+
+			rowsAffected, err := res.RowsAffected()
+
+			if err != nil {
+				fmt.Printf("Error while getting affected rows: %v", err)
+				return
+			}
+
+			if rowsAffected == 1 {
+				fmt.Fprint(w, "Task deleted")
+			} else {
+				fmt.Fprintf(w, "There is no task with id %v", todoId)
+			}
+		}
+
 	})
 
 	log.Fatal(http.ListenAndServe(address, nil))
