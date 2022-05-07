@@ -40,8 +40,6 @@ func main() {
 		return
 	}
 
-	db.Ping()
-
 	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == "GET" {
