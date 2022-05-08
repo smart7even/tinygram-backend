@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"html"
 	"io"
 	"log"
 	"net/http"
@@ -14,13 +14,10 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/smart7even/golang-do/internal/domain"
+	"github.com/smart7even/golang-do/internal/repository"
+	"github.com/smart7even/golang-do/internal/service"
 )
-
-type Todo struct {
-	Id       int64
-	Name     string
-	Complete bool
-}
 
 func init() {
 	err := godotenv.Load()
@@ -34,6 +31,9 @@ func main() {
 	address := os.Getenv("ADRESS")
 
 	db, err := sql.Open("mysql", dbConnectionString)
+
+	todoRepo := repository.NewMySQLTodoRepo(db)
+	todoService := service.NewTodoService(todoRepo)
 
 	if err != nil {
 		fmt.Printf("Can't prepare driver to connect to db: %v", err)
@@ -55,37 +55,38 @@ func main() {
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 
 		if r.Method == "GET" {
-			rows, err := db.Query("SELECT id, name, complete FROM todos")
+			todos, err := todoService.ReadAll()
 
 			if err != nil {
-				fmt.Printf("Error while requesting todos: %v", err)
-				fmt.Fprint(w, "Error", html.EscapeString(r.URL.Path))
+				response := fmt.Sprintf("Can't read todos: %v", err)
+				fmt.Println(response)
+				fmt.Fprintln(w, "Can't read todos")
 				return
-			}
-
-			defer rows.Close()
-
-			var todos []Todo
-
-			for rows.Next() {
-				var todo Todo
-				rows.Scan(&todo.Id, &todo.Name, &todo.Complete)
-				todos = append(todos, todo)
 			}
 
 			todosJson, err := json.Marshal(todos)
 
 			if err != nil {
-				fmt.Printf("Error while encoding todos to JSON: %v", err)
+				response := fmt.Sprintf("Error while encoding todos to JSON: %v", err)
+				fmt.Println(response)
+				fmt.Fprintln(w, "Error while encoding todos to JSON")
+				return
 			}
 
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, string(todosJson))
 		} else if r.Method == "POST" {
 			if b, err := io.ReadAll(r.Body); err == nil {
-				var todo Todo
+				var todo domain.Todo
 				json.Unmarshal(b, &todo)
-				db.QueryRow("INSERT INTO todos(name, complete) VALUES (?, ?)", todo.Name, todo.Complete)
+				err := todoService.Create(todo)
+
+				if err != nil {
+					response := fmt.Sprintf("Error while creating todos: %v", err)
+					fmt.Println(response)
+					fmt.Fprintln(w, "Error while creating todos")
+					return
+				}
 
 				w.WriteHeader(201)
 				w.Header().Set("Content-Type", "plain/text")
@@ -114,52 +115,33 @@ func main() {
 
 		if r.Method == "PUT" {
 			if b, err := io.ReadAll(r.Body); err == nil {
-				var todo Todo
+				var todo domain.Todo
 				todo.Id = int64(todoId)
 				json.Unmarshal(b, &todo)
 
-				res, err := db.Exec("UPDATE todos SET name = ?, complete = ? WHERE id = ?", todo.Name, todo.Complete, todo.Id)
+				err := todoService.Update(todo)
 
 				if err != nil {
-					fmt.Printf("Error while editing todo: %v", err)
+					if errors.Is(err, service.TodoDoesNotExist{}) {
+						response := fmt.Sprintf("Todo with id %v doesn't exist", err.(service.TodoDoesNotExist).TodoId)
+						fmt.Println(response)
+						fmt.Fprintln(w, response)
+					}
 					return
 				}
 
-				rowsAffected, err := res.RowsAffected()
-
-				if err != nil {
-					fmt.Printf("Error while getting affected rows: %v", err)
-					return
-				}
-
-				if rowsAffected == 1 {
-					fmt.Fprint(w, "Task edited")
-				} else {
-					fmt.Fprintf(w, "There is no task with id %v", todoId)
-				}
+				fmt.Fprintf(w, "Task with id %v edited", todoId)
 			}
 		} else if r.Method == "DELETE" {
-			res, err := db.Exec("DELETE FROM todos WHERE id = ?", todoId)
+			err := todoService.Delete(int64(todoId))
 
 			if err != nil {
-				fmt.Printf("Error while deleting todo: %v", err)
-				return
-			}
-
-			rowsAffected, err := res.RowsAffected()
-
-			if err != nil {
-				fmt.Printf("Error while getting affected rows: %v", err)
-				return
-			}
-
-			if rowsAffected == 1 {
-				fmt.Fprint(w, "Task deleted")
-			} else {
 				fmt.Fprintf(w, "There is no task with id %v", todoId)
+				return
 			}
-		}
 
+			fmt.Fprint(w, "Task deleted")
+		}
 	})
 
 	log.Fatal(http.ListenAndServe(address, nil))
