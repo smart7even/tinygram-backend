@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
 type Todo struct {
@@ -33,9 +33,16 @@ func main() {
 	dbConnectionString := os.Getenv("DB_CONNECTION_STRING")
 	address := os.Getenv("ADRESS")
 
-	db, err := sql.Open("postgres", dbConnectionString)
+	db, err := sql.Open("mysql", dbConnectionString)
 
 	if err != nil {
+		fmt.Printf("Can't prepare driver to connect to db: %v", err)
+		return
+	}
+
+	defer db.Close()
+
+	if err = db.Ping(); err != nil {
 		fmt.Printf("Can't connect to db: %v", err)
 		return
 	}
@@ -73,7 +80,7 @@ func main() {
 			if b, err := io.ReadAll(r.Body); err == nil {
 				var todo Todo
 				json.Unmarshal(b, &todo)
-				db.QueryRow("INSERT INTO todos(name, complete) VALUES ($1, $2)", todo.Name, todo.Complete)
+				db.QueryRow("INSERT INTO todos(name, complete) VALUES (?, ?)", todo.Name, todo.Complete)
 				fmt.Fprint(w, "Task added")
 			}
 		}
@@ -93,7 +100,7 @@ func main() {
 				todo.Id = int64(todoId)
 				json.Unmarshal(b, &todo)
 
-				res, err := db.Exec("UPDATE todos SET name = $1, complete = $2 WHERE id = $3", todo.Name, todo.Complete, todo.Id)
+				res, err := db.Exec("UPDATE todos SET name = ?, complete = ? WHERE id = ?", todo.Name, todo.Complete, todo.Id)
 
 				if err != nil {
 					fmt.Printf("Error while editing todo: %v", err)
@@ -114,7 +121,7 @@ func main() {
 				}
 			}
 		} else if r.Method == "DELETE" {
-			res, err := db.Exec("DELETE FROM todos WHERE id = $1", todoId)
+			res, err := db.Exec("DELETE FROM todos WHERE id = ?", todoId)
 
 			if err != nil {
 				fmt.Printf("Error while deleting todo: %v", err)

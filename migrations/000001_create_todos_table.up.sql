@@ -1,5 +1,6 @@
 CREATE TABLE todos (
-    id bigint GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR NOT NULL,
-	complete boolean not NULL
-);
+  id int NOT NULL AUTO_INCREMENT,
+  name varchar(255) NOT NULL,
+  complete bool NOT NULL,
+  PRIMARY KEY (id)
+)
