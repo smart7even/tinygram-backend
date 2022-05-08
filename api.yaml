@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  description: "Todo API"
+  version: "1.0.0"
+  title: "Simple Todo API client"
+
+servers:
+  - url: http://localhost:8080
+    description: Todo service adress
+
+paths:
+  /tasks:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoWithoutId'
+      responses:
+        '201':
+          description: Success
+          content:
+            plain/text:
+              schema:
+                type: string
+    get:
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodosList'
+  /tasks/{id}:
+    put:
+      parameters:
+        - name: id
+          in: path          
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoWithoutId'
+      responses:
+        '200':
+          description: Success
+          
+          content:
+            plain/text:
+              schema:
+                type: string
+    delete:
+      parameters:
+        - name: id
+          in: path          
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            plain/text:
+              schema:
+                type: string
+
+components:
+  schemas:
+    TodoWithoutId:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'Prepare dinner'
+        complete:
+          type: boolean
+          example: false
+    Todo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Prepare dinner'
+        complete:
+          type: boolean
+          example: false
+    TodosList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Todo'
+        

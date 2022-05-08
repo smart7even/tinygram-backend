@@ -48,6 +48,11 @@ func main() {
 	}
 
 	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Handling /tasks request, method %v\n", r.Method)
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
 
 		if r.Method == "GET" {
 			rows, err := db.Query("SELECT id, name, complete FROM todos")
@@ -81,8 +86,15 @@ func main() {
 				var todo Todo
 				json.Unmarshal(b, &todo)
 				db.QueryRow("INSERT INTO todos(name, complete) VALUES (?, ?)", todo.Name, todo.Complete)
+
+				w.WriteHeader(201)
+				w.Header().Set("Content-Type", "plain/text")
 				fmt.Fprint(w, "Task added")
+			} else {
+				fmt.Printf("Error while parsing request body: %v", err)
 			}
+		} else if r.Method == "OPTIONS" {
+			w.WriteHeader(200)
 		}
 	})
 
@@ -93,6 +105,12 @@ func main() {
 			fmt.Printf("Error while parsing request URL: %v", err)
 			return
 		}
+
+		fmt.Printf("Handling /tasks/{%v} request, method %v\n", todoId, r.Method)
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
 
 		if r.Method == "PUT" {
 			if b, err := io.ReadAll(r.Body); err == nil {
