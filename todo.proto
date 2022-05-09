@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option go_package = "github.com/smart7even/golang-do/internal/transport/grpc_handler";
+
+package grpc_handler;
+
+service TodoService {
+    rpc GetTodos (GetTodosParams) returns (Todos) {}
+    rpc AddTodo (AddTodoParams) returns (AddTodoResponse) {}
+    rpc EditTodo (EditTodoParams) returns (EditTodoResponse) {}
+    rpc DeleteTodo (DeleteTodoParams) returns (DeleteTodoResponse) {}
+}
+
+message GetTodosParams{}
+message AddTodoParams{
+    Todo todo = 1;
+}
+
+message EditTodoParams{
+    Todo todo = 1;
+}
+
+message DeleteTodoParams{
+    int64 todoId = 1;
+}
+
+message AddTodoResponse{
+    bool added = 1; 
+}
+
+message EditTodoResponse{
+    bool edited = 1; 
+}
+
+message DeleteTodoResponse{
+    bool deleted = 1; 
+}
+
+message Todos {
+    repeated Todo todos = 1;
+}
+
+message Todo {
+    int64 id = 1;
+    string name = 2;
+    bool complete = 3;
+}

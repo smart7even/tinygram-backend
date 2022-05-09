@@ -4,13 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/smart7even/golang-do/internal/repository"
 	"github.com/smart7even/golang-do/internal/service"
+	pb "github.com/smart7even/golang-do/internal/transport/grpc_handler"
 	"github.com/smart7even/golang-do/internal/transport/http_handler"
+	"google.golang.org/grpc"
 )
 
 func init() {
@@ -22,7 +25,8 @@ func init() {
 
 func main() {
 	dbConnectionString := os.Getenv("DB_CONNECTION_STRING")
-	address := os.Getenv("ADRESS")
+	httpAddress := os.Getenv("HTTP_ADRESS")
+	grpcAdress := os.Getenv("GRPC_ADRESS")
 
 	db, err := sql.Open("mysql", dbConnectionString)
 
@@ -48,5 +52,18 @@ func main() {
 	handler := http_handler.Handler{Services: services}
 	router := handler.InitAPI()
 
-	router.Run(address)
+	go func() {
+		router.Run(httpAddress)
+	}()
+
+	lis, err := net.Listen("tcp", grpcAdress)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterTodoServiceServer(s, pb.NewTodoGrpcServer(services))
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
