@@ -15,7 +15,29 @@ protoc --go_out=internal/transport/grpc_handler --go_opt=paths=source_relative -
 
 ## Installation
 
-To run:
+### Run with docker compose
+
+specify following variables in .env:
+
+- DB_USER (MySQL user)
+- DB_PASS (MySQL password)
+- HTTP_ADRESS (adress on which REST API will be available)
+- GRPC_ADRESS (adress on which GRPC API will be available)
+
+.env example:
+
+```
+DB_USER=user
+DB_PASS=password
+HTTP_ADRESS=127.0.0.1:8080
+GRPC_ADRESS=127.0.0.1:8081
+```
+
+Then run with `docker compose up`
+
+Well done. Now try to use the REST api using swagger and `api.yaml` schema. Or try to use GRPC client (example of usage in client folder)
+
+### Run without docker compose
 
 - specify DB_CONNECTION_STRING key in .env file
 - specify HTTP_ADRESS key in .env file (IP adress and port on which your HTTP service will be available)

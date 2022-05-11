@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: todolist
+    ports:
+      - "3306"
+  backend:
+    build: .
+    restart: always
+    ports:
+      - ${HTTP_ADRESS}:8080
+      - ${GRPC_ADRESS}:8081
+    environment:
+      - HTTP_ADRESS=:8080
+      - GRPC_ADRESS=:8081
+      - DB_CONNECTION_STRING=${DB_USER}:${DB_PASS}@tcp(db:3306)/todolist
+  
