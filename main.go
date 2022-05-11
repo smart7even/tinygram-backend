@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -52,18 +57,45 @@ func main() {
 	handler := http_handler.Handler{Services: services}
 	router := handler.InitAPI()
 
-	go func() {
-		router.Run(httpAddress)
-	}()
-
-	lis, err := net.Listen("tcp", grpcAdress)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	srv := &http.Server{
+		Addr:    httpAddress,
+		Handler: router,
 	}
+
 	s := grpc.NewServer()
 	pb.RegisterTodoServiceServer(s, pb.NewTodoGrpcServer(services))
-	log.Printf("server listening at %v", lis.Addr())
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("listen: %s\n", err)
+		}
+	}()
+
+	go func() {
+		lis, err := net.Listen("tcp", grpcAdress)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		log.Printf("server listening at %v", lis.Addr())
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+
+	const timeout = 5 * time.Second
+
+	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
+	defer shutdown()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Printf("failed to stop server: %v", err)
 	}
+
+	s.GracefulStop()
 }
