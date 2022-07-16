@@ -98,5 +98,56 @@ func (h *Handler) InitAPI() *gin.Engine {
 		c.String(200, "Task deleted")
 	})
 
+	r.POST("/users", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		err := h.Services.User.Create(token)
+
+		if err != nil {
+			fmt.Printf("Error while creating user: %v", err)
+			c.String(400, "Can't create user")
+			return
+		}
+
+		c.String(200, "User created")
+	})
+
+	r.GET("/users", func(c *gin.Context) {
+		users, err := h.Services.User.ReadAll()
+
+		if err != nil {
+			response := fmt.Sprintf("Can't read users: %v", err)
+			fmt.Println(response)
+			c.String(400, "Can't read users")
+			return
+		}
+
+		c.JSON(200, users)
+	})
+
+	r.DELETE("/users", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		err := h.Services.User.Delete(token)
+
+		if err != nil {
+			fmt.Printf("Error while deleting user: %v", err)
+			c.String(400, "Can't delete user")
+			return
+		}
+
+		c.String(200, "User deleted")
+	})
+
 	return r
 }

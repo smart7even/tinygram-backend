@@ -17,7 +17,21 @@ import (
 	pb "github.com/smart7even/golang-do/internal/transport/grpc_handler"
 	"github.com/smart7even/golang-do/internal/transport/http_handler"
 	"google.golang.org/grpc"
+
+	firebase "firebase.google.com/go"
+
+	"google.golang.org/api/option"
 )
+
+func initFirebase() (*firebase.App, error) {
+	opt := option.WithCredentialsFile("firebase.json")
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing app: %v", err)
+	}
+
+	return app, nil
+}
 
 func Run(dbConnectionString, httpAddress, grpcAdress string) {
 	db, err := sql.Open("mysql", dbConnectionString)
@@ -25,8 +39,19 @@ func Run(dbConnectionString, httpAddress, grpcAdress string) {
 	todoRepo := repository.NewMySQLTodoRepo(db)
 	todoService := service.NewTodoService(todoRepo)
 
+	firebaseApp, err := initFirebase()
+
+	if err != nil {
+		fmt.Printf("Unable to initialize Firebase %v", err)
+		return
+	}
+
+	userRepo := repository.NewMySQLUserRepo(db, *firebaseApp)
+	userService := service.NewUserService(userRepo)
+
 	services := service.Services{
 		Todo: *todoService,
+		User: *userService,
 	}
 
 	if err != nil {
