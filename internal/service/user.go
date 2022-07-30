@@ -47,3 +47,7 @@ func (s *UserService) Update(user domain.User) error {
 func (s *UserService) Delete(userId string) error {
 	return s.userRepo.Delete(userId)
 }
+
+func (s *UserService) ReadByToken(token string) (*domain.User, error) {
+	return s.userRepo.ReadByToken(token)
+}

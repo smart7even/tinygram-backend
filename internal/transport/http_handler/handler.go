@@ -23,6 +23,8 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 	h.makeTodosRoutes(r)
 	h.makeUsersRoutes(r)
+	h.makeChatRoutes(r)
+	h.makeMessageRoutes(r)
 
 	return r
 }
@@ -105,6 +107,9 @@ func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 		c.String(200, "Task deleted")
 	})
 
+}
+
+func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 	r.POST("/users", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
@@ -123,9 +128,6 @@ func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 
 		c.String(200, "User created")
 	})
-}
-
-func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 
 	r.GET("/users", func(c *gin.Context) {
 		users, err := h.Services.User.ReadAll()
@@ -157,5 +159,269 @@ func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 		}
 
 		c.String(200, "User deleted")
+	})
+}
+
+func (h *Handler) makeChatRoutes(r *gin.Engine) {
+	r.GET("/chat", func(c *gin.Context) {
+		chat, err := h.Services.Chat.ReadAll()
+
+		if err != nil {
+			response := fmt.Sprintf("Can't read chats: %v", err)
+			fmt.Println(response)
+			c.String(400, "Can't read chats")
+			return
+		}
+
+		c.JSON(200, chat)
+	})
+
+	r.POST("/chat", func(c *gin.Context) {
+		if b, err := io.ReadAll(c.Request.Body); err == nil {
+			var chat domain.Chat
+			json.Unmarshal(b, &chat)
+			err := h.Services.Chat.Create(chat)
+
+			if err != nil {
+				fmt.Printf("Error while creating chat: %v", err)
+				c.String(500, "Error while creating chat")
+				return
+			}
+
+			c.String(201, "Chat added")
+		} else {
+			fmt.Printf("Error while parsing request body: %v", err)
+		}
+	})
+
+	r.PUT("/chat/:id", func(c *gin.Context) {
+		chatId := c.Param("id")
+
+		if chatId == "" {
+			fmt.Printf("Error while parsing chatId from path")
+			c.String(400, "Error while parsing chatId from path")
+		}
+
+		if b, err := io.ReadAll(c.Request.Body); err == nil {
+			var chat domain.Chat
+			json.Unmarshal(b, &chat)
+			chat.Id = chatId
+
+			err := h.Services.Chat.Update(chat)
+
+			if err != nil {
+				response := fmt.Sprintf("Error while updating chat: %v", err)
+				fmt.Println(response)
+				c.String(400, response)
+				return
+			}
+
+			c.String(200, "Chat with id %v edited", chatId)
+		}
+	})
+
+	r.DELETE("/chat/:id", func(c *gin.Context) {
+		chatId := c.Param("id")
+
+		if chatId == "" {
+			fmt.Printf("Error while parsing chatId from path")
+			c.String(400, "Error while parsing chatId from path")
+		}
+
+		err := h.Services.Chat.Delete(chatId)
+
+		if err != nil {
+			response := fmt.Sprintf("Error while deleting chat: %v", err)
+			fmt.Println(response)
+			c.String(400, response)
+			return
+		}
+
+		c.String(200, "Chat deleted")
+	})
+
+	r.POST("/chat/:id/user/:user_id", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		chatId := c.Param("id")
+		userId := c.Param("user_id")
+
+		if user.Id != userId {
+			c.String(400, "You can't add user to chat")
+			return
+		}
+
+		err = h.Services.Chat.Join(chatId, userId)
+
+		if err != nil {
+			fmt.Printf("Error while joining chat: %v", err)
+			c.String(400, "Can't join chat")
+			return
+		}
+
+		c.String(200, "User added to chat")
+	})
+}
+
+func (h *Handler) makeMessageRoutes(r *gin.Engine) {
+	r.POST("/chat/:id/message", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		chatId := c.Param("id")
+
+		if b, err := io.ReadAll(c.Request.Body); err == nil {
+			var message domain.Message
+			json.Unmarshal(b, &message)
+			message.ChatId = chatId
+			message.UserId = user.Id
+			err := h.Services.Message.Create(message, user.Id)
+
+			if err != nil {
+				fmt.Printf("Error while creating message: %v", err)
+				c.String(500, "Error while creating message")
+				return
+			}
+
+			c.String(201, "Message added")
+		} else {
+			fmt.Printf("Error while parsing request body: %v", err)
+		}
+	})
+
+	r.GET("/chat/:id/message", func(c *gin.Context) {
+		chatId := c.Param("id")
+
+		if chatId == "" {
+			fmt.Printf("Error while parsing chatId from path")
+			c.String(400, "Error while parsing chatId from path")
+		}
+
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		messages, err := h.Services.Message.ReadAll(chatId, user.Id)
+
+		if err != nil {
+			response := fmt.Sprintf("Can't read messages: %v", err)
+			fmt.Println(response)
+			c.String(400, "Can't read messages")
+			return
+		}
+
+		c.JSON(200, messages)
+	})
+
+	r.PUT("/chat/:id/message", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		messageId := c.Param("id")
+
+		if messageId == "" {
+			fmt.Printf("Error while parsing messageId from path")
+			c.String(400, "Error while parsing messageId from path")
+		}
+
+		if b, err := io.ReadAll(c.Request.Body); err == nil {
+			var message domain.Message
+			message.Id = messageId
+			json.Unmarshal(b, &message)
+
+			err := h.Services.Message.Update(message, user.Id)
+
+			if err != nil {
+				response := fmt.Sprintf("Error while updating message: %v", err)
+				fmt.Println(response)
+				c.String(400, response)
+				return
+			}
+
+			c.String(200, "Message with id %v edited", messageId)
+		}
+	})
+
+	r.DELETE("/chat/:id/message/:message_id", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		messageId := c.Param("message_id")
+
+		if messageId == "" {
+			fmt.Printf("Error while parsing messageId from path")
+			c.String(400, "Error while parsing messageId from path")
+		}
+
+		err = h.Services.Message.Delete(messageId, user.Id)
+
+		if err != nil {
+			response := fmt.Sprintf("Error while deleting message: %v", err)
+			fmt.Println(response)
+			c.String(400, response)
+			return
+		}
+
+		c.String(200, "Message deleted")
 	})
 }
