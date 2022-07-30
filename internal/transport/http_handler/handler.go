@@ -21,6 +21,13 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 	r.Use(corsMiddleware)
 
+	h.makeTodosRoutes(r)
+	h.makeUsersRoutes(r)
+
+	return r
+}
+
+func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 	r.GET("/tasks", func(c *gin.Context) {
 		todos, err := h.Services.Todo.ReadAll()
 
@@ -116,6 +123,9 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 		c.String(200, "User created")
 	})
+}
+
+func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 
 	r.GET("/users", func(c *gin.Context) {
 		users, err := h.Services.User.ReadAll()
@@ -148,6 +158,4 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 		c.String(200, "User deleted")
 	})
-
-	return r
 }
