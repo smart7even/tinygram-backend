@@ -29,6 +29,7 @@ func (h *Handler) InitAPI() *gin.Engine {
 	}
 
 	chatGroup := r.Group("/chat")
+	chatGroup.Use(h.authMiddleware)
 	{
 		h.makeChatRoutes(chatGroup)
 		h.makeMessageRoutes(chatGroup)
@@ -286,21 +287,7 @@ func (h *Handler) makeChatRoutes(r *gin.RouterGroup) {
 
 func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
 	r.POST("/:id/message", func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token == "" {
-			c.String(400, "Token is required")
-			return
-		}
-
-		user, err := h.Services.User.ReadByToken(token)
-
-		if err != nil {
-			fmt.Printf("Error while reading user: %v", err)
-			c.String(400, "Can't read user")
-			return
-		}
-
+		user := c.MustGet("user").(*domain.User)
 		chatId := c.Param("id")
 
 		if b, err := io.ReadAll(c.Request.Body); err == nil {
@@ -330,20 +317,7 @@ func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
 			c.String(400, "Error while parsing chatId from path")
 		}
 
-		token := c.Request.Header.Get("token")
-
-		if token == "" {
-			c.String(400, "Token is required")
-			return
-		}
-
-		user, err := h.Services.User.ReadByToken(token)
-
-		if err != nil {
-			fmt.Printf("Error while reading user: %v", err)
-			c.String(400, "Can't read user")
-			return
-		}
+		user := c.MustGet("user").(*domain.User)
 
 		messages, err := h.Services.Message.ReadAll(chatId, user.Id)
 
@@ -358,20 +332,7 @@ func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
 	})
 
 	r.PUT("/:id/message", func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token == "" {
-			c.String(400, "Token is required")
-			return
-		}
-
-		user, err := h.Services.User.ReadByToken(token)
-
-		if err != nil {
-			fmt.Printf("Error while reading user: %v", err)
-			c.String(400, "Can't read user")
-			return
-		}
+		user := c.MustGet("user").(*domain.User)
 
 		messageId := c.Param("id")
 
@@ -399,20 +360,7 @@ func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
 	})
 
 	r.DELETE("/:id/message/:message_id", func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token == "" {
-			c.String(400, "Token is required")
-			return
-		}
-
-		user, err := h.Services.User.ReadByToken(token)
-
-		if err != nil {
-			fmt.Printf("Error while reading user: %v", err)
-			c.String(400, "Can't read user")
-			return
-		}
+		user := c.MustGet("user").(*domain.User)
 
 		messageId := c.Param("message_id")
 
@@ -421,7 +369,7 @@ func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
 			c.String(400, "Error while parsing messageId from path")
 		}
 
-		err = h.Services.Message.Delete(messageId, user.Id)
+		err := h.Services.Message.Delete(messageId, user.Id)
 
 		if err != nil {
 			response := fmt.Sprintf("Error while deleting message: %v", err)
