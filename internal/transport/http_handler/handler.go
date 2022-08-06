@@ -22,9 +22,17 @@ func (h *Handler) InitAPI() *gin.Engine {
 	r.Use(corsMiddleware)
 
 	h.makeTodosRoutes(r)
-	h.makeUsersRoutes(r)
-	h.makeChatRoutes(r)
-	h.makeMessageRoutes(r)
+
+	usersGroup := r.Group("/users")
+	{
+		h.makeUsersRoutes(usersGroup)
+	}
+
+	chatGroup := r.Group("/chat")
+	{
+		h.makeChatRoutes(chatGroup)
+		h.makeMessageRoutes(chatGroup)
+	}
 
 	return r
 }
@@ -109,8 +117,8 @@ func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 
 }
 
-func (h *Handler) makeUsersRoutes(r *gin.Engine) {
-	r.POST("/users", func(c *gin.Context) {
+func (h *Handler) makeUsersRoutes(r *gin.RouterGroup) {
+	r.POST("/", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
@@ -129,7 +137,7 @@ func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 		c.String(200, "User created")
 	})
 
-	r.GET("/users", func(c *gin.Context) {
+	r.GET("/", func(c *gin.Context) {
 		users, err := h.Services.User.ReadAll()
 
 		if err != nil {
@@ -142,7 +150,7 @@ func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 		c.JSON(200, users)
 	})
 
-	r.DELETE("/users", func(c *gin.Context) {
+	r.DELETE("/", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
@@ -162,8 +170,8 @@ func (h *Handler) makeUsersRoutes(r *gin.Engine) {
 	})
 }
 
-func (h *Handler) makeChatRoutes(r *gin.Engine) {
-	r.GET("/chat", func(c *gin.Context) {
+func (h *Handler) makeChatRoutes(r *gin.RouterGroup) {
+	r.GET("/", func(c *gin.Context) {
 		chat, err := h.Services.Chat.ReadAll()
 
 		if err != nil {
@@ -176,7 +184,7 @@ func (h *Handler) makeChatRoutes(r *gin.Engine) {
 		c.JSON(200, chat)
 	})
 
-	r.POST("/chat", func(c *gin.Context) {
+	r.POST("/", func(c *gin.Context) {
 		if b, err := io.ReadAll(c.Request.Body); err == nil {
 			var chat domain.Chat
 			json.Unmarshal(b, &chat)
@@ -194,7 +202,7 @@ func (h *Handler) makeChatRoutes(r *gin.Engine) {
 		}
 	})
 
-	r.PUT("/chat/:id", func(c *gin.Context) {
+	r.PUT("/:id", func(c *gin.Context) {
 		chatId := c.Param("id")
 
 		if chatId == "" {
@@ -220,7 +228,7 @@ func (h *Handler) makeChatRoutes(r *gin.Engine) {
 		}
 	})
 
-	r.DELETE("/chat/:id", func(c *gin.Context) {
+	r.DELETE("/:id", func(c *gin.Context) {
 		chatId := c.Param("id")
 
 		if chatId == "" {
@@ -240,7 +248,7 @@ func (h *Handler) makeChatRoutes(r *gin.Engine) {
 		c.String(200, "Chat deleted")
 	})
 
-	r.POST("/chat/:id/user/:user_id", func(c *gin.Context) {
+	r.POST("/:id/user/:user_id", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
@@ -276,8 +284,8 @@ func (h *Handler) makeChatRoutes(r *gin.Engine) {
 	})
 }
 
-func (h *Handler) makeMessageRoutes(r *gin.Engine) {
-	r.POST("/chat/:id/message", func(c *gin.Context) {
+func (h *Handler) makeMessageRoutes(r *gin.RouterGroup) {
+	r.POST("/:id/message", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
@@ -314,7 +322,7 @@ func (h *Handler) makeMessageRoutes(r *gin.Engine) {
 		}
 	})
 
-	r.GET("/chat/:id/message", func(c *gin.Context) {
+	r.GET("/:id/message", func(c *gin.Context) {
 		chatId := c.Param("id")
 
 		if chatId == "" {
@@ -349,7 +357,7 @@ func (h *Handler) makeMessageRoutes(r *gin.Engine) {
 		c.JSON(200, messages)
 	})
 
-	r.PUT("/chat/:id/message", func(c *gin.Context) {
+	r.PUT("/:id/message", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
@@ -390,7 +398,7 @@ func (h *Handler) makeMessageRoutes(r *gin.Engine) {
 		}
 	})
 
-	r.DELETE("/chat/:id/message/:message_id", func(c *gin.Context) {
+	r.DELETE("/:id/message/:message_id", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
