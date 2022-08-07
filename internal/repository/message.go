@@ -23,6 +23,7 @@ func NewMySQLMessageRepo(db *sql.DB) service.MessageRepo {
 func (r *MySqlMessageRepo) Create(message domain.Message, userId string) error {
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, message.ChatId)
 	if row.Err() == nil {
+		row.Scan()
 		message.Id = uuid.New().String()
 		message.SentAt = time.Now()
 		_, err := r.db.Exec("INSERT INTO messages (id, chat_id, user_id, text, sent_at) VALUES (?, ?, ?, ?, ?)", message.Id, message.ChatId, message.UserId, message.Text, message.SentAt)

@@ -23,6 +23,35 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 	h.makeTodosRoutes(r)
 
+	r.POST("/auth/token", func(c *gin.Context) {
+		token := c.Request.Header.Get("token")
+
+		if token == "" {
+			c.String(400, "Token is required")
+			return
+		}
+
+		user, err := h.Services.User.ReadByToken(token)
+
+		if err != nil {
+			fmt.Printf("Error while reading user: %v", err)
+			c.String(400, "Can't read user")
+			return
+		}
+
+		appToken, err := h.Services.Auth.Sign(user.Id)
+
+		if err != nil {
+			fmt.Printf("Error while signing token: %v", err)
+			c.String(400, "Can't sign token")
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"token": appToken,
+		})
+	})
+
 	usersGroup := r.Group("/users")
 	{
 		h.makeUsersRoutes(usersGroup)

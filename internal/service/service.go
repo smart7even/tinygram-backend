@@ -5,6 +5,7 @@ type Services struct {
 	User    UserService
 	Chat    ChatService
 	Message MessageService
+	Auth    AuthService
 }
 
 type Deps struct {

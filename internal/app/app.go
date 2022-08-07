@@ -33,7 +33,7 @@ func initFirebase() (*firebase.App, error) {
 	return app, nil
 }
 
-func Run(dbConnectionString, httpAddress, grpcAdress string) {
+func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 	db, err := sql.Open("mysql", dbConnectionString+"?parseTime=true")
 
 	if err != nil {
@@ -60,11 +60,14 @@ func Run(dbConnectionString, httpAddress, grpcAdress string) {
 	messageRepo := repository.NewMySQLMessageRepo(db)
 	messageService := service.NewMessageService(messageRepo)
 
+	authService := service.NewAuthService(secret)
+
 	services := service.Services{
 		Todo:    *todoService,
 		User:    *userService,
 		Chat:    *chatService,
 		Message: *messageService,
+		Auth:    *authService,
 	}
 
 	if err != nil {

@@ -24,18 +24,27 @@ func (h *Handler) authMiddleware(c *gin.Context) {
 	token := c.GetHeader("token")
 
 	if token == "" {
+		fmt.Printf("Token is required\n")
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	user, err := h.Services.User.ReadByToken(token)
+	userId, err := h.Services.Auth.Verify(token)
 
 	if err != nil {
-		fmt.Printf("Error while reading user: %v", err)
-		c.String(400, "Can't read user")
+		fmt.Printf("Error while verifying token: %v\n", err)
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	c.Set("user", user)
+	user, err := h.Services.User.Read(userId)
+
+	if err != nil {
+		fmt.Printf("Error while reading user: %v\n", err)
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	c.Set("user", &user)
 	c.Next()
 }

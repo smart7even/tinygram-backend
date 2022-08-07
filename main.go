@@ -26,6 +26,11 @@ func main() {
 	dbConnectionString := os.Getenv("DB_CONNECTION_STRING")
 	httpAddress := os.Getenv("HTTP_ADRESS")
 	grpcAdress := os.Getenv("GRPC_ADRESS")
+	secret := os.Getenv("SECRET")
+
+	if secret == "" {
+		log.Fatal("SECRET is not set")
+	}
 
 	time.Sleep(time.Second * 2)
 
@@ -52,5 +57,5 @@ func main() {
 		log.Printf("Migrations to db applied")
 	}
 
-	app.Run(dbConnectionString, httpAddress, grpcAdress)
+	app.Run(dbConnectionString, httpAddress, grpcAdress, secret)
 }
