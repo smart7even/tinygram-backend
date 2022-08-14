@@ -37,7 +37,7 @@ func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Messa
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, chatId)
 
 	if row.Err() == nil {
-		rows, err := r.db.Query("SELECT id, chat_id, user_id, text, sent_at FROM messages WHERE chat_id = ? ORDER BY sent_at", chatId)
+		rows, err := r.db.Query("SELECT messages.id, chat_id, user_id, users.name, text, sent_at FROM messages INNER JOIN users ON users.id = user_id WHERE chat_id = ? ORDER BY sent_at;", chatId)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Messa
 		messages := []domain.Message{}
 		for rows.Next() {
 			var message domain.Message
-			if err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.Text, &message.SentAt); err != nil {
+			if err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.UserName, &message.Text, &message.SentAt); err != nil {
 				return nil, err
 			}
 			messages = append(messages, message)
