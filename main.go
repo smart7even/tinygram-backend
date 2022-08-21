@@ -16,9 +16,11 @@ import (
 )
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Can't load .env file")
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Printf("Can't load .env file")
+		}
 	}
 }
 
