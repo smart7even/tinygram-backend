@@ -51,6 +51,9 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		return
 	}
 
+	eventRepo := repository.NewMySqlEventRepo(db)
+	eventService := service.NewEventService(eventRepo)
+
 	userRepo := repository.NewMySQLUserRepo(db, *firebaseApp)
 	userService := service.NewUserService(userRepo)
 
@@ -58,7 +61,7 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 	chatService := service.NewChatService(chatRepo)
 
 	messageRepo := repository.NewMySQLMessageRepo(db)
-	messageService := service.NewMessageService(messageRepo)
+	messageService := service.NewMessageService(messageRepo, eventRepo)
 
 	authService := service.NewAuthService(secret)
 
@@ -68,6 +71,7 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		Chat:    *chatService,
 		Message: *messageService,
 		Auth:    *authService,
+		Event:   *eventService,
 	}
 
 	if err != nil {

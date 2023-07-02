@@ -2,7 +2,9 @@ package service
 
 import (
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/smart7even/golang-do/internal/domain"
 )
 
@@ -13,19 +15,37 @@ type MessageRepo interface {
 	Delete(id string, userId string) error
 }
 
-func NewMessageService(messageRepo MessageRepo) *MessageService {
+func NewMessageService(messageRepo MessageRepo, eventsRepo EventRepo) *MessageService {
 	return &MessageService{
 		messageRepo: messageRepo,
+		eventsRepo:  eventsRepo,
 	}
 }
 
 type MessageService struct {
 	messageRepo MessageRepo
+	eventsRepo  EventRepo
 }
 
 func (s *MessageService) Create(message domain.Message, userId string) error {
 	if message.Text == "" {
 		return errors.New("message text is required")
+	}
+
+	event := domain.Event{
+		Id:          uuid.New().String(),
+		Name:        "message_created",
+		Description: "message created",
+		CreatedAt:   time.Now(),
+		Payload: map[string]interface{}{
+			"message": message,
+		},
+	}
+
+	err := s.eventsRepo.Create(event)
+
+	if err != nil {
+		return err
 	}
 
 	return s.messageRepo.Create(message, userId)

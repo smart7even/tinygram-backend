@@ -6,6 +6,7 @@ type Services struct {
 	Chat    ChatService
 	Message MessageService
 	Auth    AuthService
+	Event   EventService
 }
 
 type Deps struct {
@@ -13,4 +14,5 @@ type Deps struct {
 	UserRepo    UserRepo
 	ChatRepo    ChatRepo
 	MessageRepo MessageRepo
+	EventRepo   EventRepo
 }
