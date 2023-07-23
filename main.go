@@ -10,8 +10,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"github.com/smart7even/golang-do/internal/app"
 )
 
@@ -38,7 +40,7 @@ func main() {
 
 	m, err := migrate.New(
 		"file://migrations",
-		fmt.Sprintf("mysql://%s", dbConnectionString))
+		fmt.Sprintf("postgres://%s", dbConnectionString))
 
 	if err != nil {
 		log.Fatalf("Unable to prepare migrations: %v", err)

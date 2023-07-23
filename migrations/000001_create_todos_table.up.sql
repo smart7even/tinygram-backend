@@ -1,6 +1,5 @@
 CREATE TABLE todos (
-  id int NOT NULL AUTO_INCREMENT,
+  id BIGSERIAL PRIMARY KEY,
   name varchar(255) NOT NULL,
-  complete bool NOT NULL,
-  PRIMARY KEY (id)
+  complete BOOLEAN NOT NULL,
 )

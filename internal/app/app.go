@@ -34,7 +34,7 @@ func initFirebase() (*firebase.App, error) {
 }
 
 func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
-	db, err := sql.Open("mysql", dbConnectionString+"?parseTime=true")
+	db, err := sql.Open("postgres", "postgres://"+dbConnectionString)
 
 	if err != nil {
 		fmt.Printf("Unable to connect to db %v", err)

@@ -12,6 +12,8 @@ require (
 	google.golang.org/protobuf v1.28.0
 )
 
+require github.com/lib/pq v1.10.9 // indirect
+
 require (
 	cloud.google.com/go v0.99.0 // indirect
 	cloud.google.com/go/firestore v1.1.0 // indirect
