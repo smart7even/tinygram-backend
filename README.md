@@ -1,7 +1,7 @@
 # Simple todo app backend written in golang
 
 - Provides REST and GRPC interfaces
-- Uses MySQL as database
+- Uses PostgreSQL as database
 
 ## API
 
@@ -19,8 +19,8 @@ protoc --go_out=internal/transport/grpc_handler --go_opt=paths=source_relative -
 
 specify following variables in .env:
 
-- DB_USER (MySQL user)
-- DB_PASS (MySQL password)
+- DB_USER (PostgreSQL user)
+- DB_PASS (PostgreSQL password)
 - HTTP_ADRESS (adress on which REST API will be available)
 - GRPC_ADRESS (adress on which GRPC API will be available)
 
@@ -43,7 +43,7 @@ Well done. Now try to use the REST api using swagger and `api.yaml` schema. Or t
 - specify HTTP_ADRESS key in .env file (IP adress and port on which your HTTP service will be available)
 - specify GRPC_ADRESS key in .env file (IP adress and port on which your GRPC service will be available)
 - install [migrate](https://github.com/golang-migrate/migrate)
-- create tables in your db by running `migrate -database mysql://{DB_CONNECTION_STRING} -path migrations up` (insert DB_CONNECTION_STRING value here)
+- create tables in your db by running `migrate -database postgres://{DB_CONNECTION_STRING} -path migrations up` (insert DB_CONNECTION_STRING value here)
 - run using `go run main.go`
 
 .env example:
@@ -62,4 +62,4 @@ migrate create -seq -ext sql -dir migrations migration_name
 
 Make migration:
 
-migrate -database mysql://{DB_CONNECTION_STRING} -path migrations up
+migrate -database postgres://{DB_CONNECTION_STRING} -path migrations up

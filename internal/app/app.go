@@ -41,7 +41,7 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		return
 	}
 
-	todoRepo := repository.NewMySQLTodoRepo(db)
+	todoRepo := repository.NewPGTodoRepo(db)
 	todoService := service.NewTodoService(todoRepo)
 
 	firebaseApp, err := initFirebase()
@@ -51,16 +51,16 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		return
 	}
 
-	eventRepo := repository.NewMySqlEventRepo(db)
+	eventRepo := repository.NewPGEventRepo(db)
 	eventService := service.NewEventService(eventRepo)
 
-	userRepo := repository.NewMySQLUserRepo(db, *firebaseApp)
+	userRepo := repository.NewPGUserRepo(db, *firebaseApp)
 	userService := service.NewUserService(userRepo)
 
-	chatRepo := repository.NewMySQLChatRepo(db)
+	chatRepo := repository.NewPGChatRepo(db)
 	chatService := service.NewChatService(chatRepo)
 
-	messageRepo := repository.NewMySQLMessageRepo(db)
+	messageRepo := repository.NewPGMessageRepo(db)
 	messageService := service.NewMessageService(messageRepo, eventRepo)
 
 	authService := service.NewAuthService(secret)

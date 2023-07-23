@@ -8,23 +8,23 @@ import (
 	"github.com/smart7even/golang-do/internal/service"
 )
 
-type MySQLTodoRepo struct {
+type PGTodoRepo struct {
 	db *sql.DB
 }
 
-func NewMySQLTodoRepo(db *sql.DB) service.TodoRepo {
-	return &MySQLTodoRepo{
+func NewPGTodoRepo(db *sql.DB) service.TodoRepo {
+	return &PGTodoRepo{
 		db: db,
 	}
 }
 
-func (r *MySQLTodoRepo) Create(todo domain.Todo) error {
+func (r *PGTodoRepo) Create(todo domain.Todo) error {
 	_, err := r.db.Exec("INSERT INTO todos(name, complete) VALUES ($1, $2)", todo.Name, todo.Complete)
 
 	return err
 }
 
-func (r *MySQLTodoRepo) ReadAll() ([]domain.Todo, error) {
+func (r *PGTodoRepo) ReadAll() ([]domain.Todo, error) {
 	rows, err := r.db.Query("SELECT id, name, complete FROM todos")
 
 	if err != nil {
@@ -45,7 +45,7 @@ func (r *MySQLTodoRepo) ReadAll() ([]domain.Todo, error) {
 	return todos, nil
 }
 
-func (r *MySQLTodoRepo) Update(todo domain.Todo) error {
+func (r *PGTodoRepo) Update(todo domain.Todo) error {
 
 	res, err := r.db.Exec("UPDATE todos SET name = $1, complete = $2 WHERE id = $3", todo.Name, todo.Complete, todo.Id)
 
@@ -68,7 +68,7 @@ func (r *MySQLTodoRepo) Update(todo domain.Todo) error {
 	}
 }
 
-func (r *MySQLTodoRepo) Delete(todoId int64) error {
+func (r *PGTodoRepo) Delete(todoId int64) error {
 	res, err := r.db.Exec("DELETE FROM todos WHERE id = $1", todoId)
 
 	if err != nil {

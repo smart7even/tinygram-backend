@@ -7,22 +7,22 @@ import (
 	"github.com/smart7even/golang-do/internal/service"
 )
 
-type MySQLChatRepo struct {
+type PGChatRepo struct {
 	db *sql.DB
 }
 
-func NewMySQLChatRepo(db *sql.DB) service.ChatRepo {
-	return &MySQLChatRepo{
+func NewPGChatRepo(db *sql.DB) service.ChatRepo {
+	return &PGChatRepo{
 		db: db,
 	}
 }
 
-func (r *MySQLChatRepo) Create(chat domain.Chat) error {
+func (r *PGChatRepo) Create(chat domain.Chat) error {
 	_, err := r.db.Exec("INSERT INTO chats (id, name) VALUES ($1, $2)", chat.Id, chat.Name)
 	return err
 }
 
-func (r *MySQLChatRepo) ReadAll() ([]domain.Chat, error) {
+func (r *PGChatRepo) ReadAll() ([]domain.Chat, error) {
 	rows, err := r.db.Query("SELECT id, name FROM chats")
 	if err != nil {
 		return nil, err
@@ -41,17 +41,17 @@ func (r *MySQLChatRepo) ReadAll() ([]domain.Chat, error) {
 	return chats, nil
 }
 
-func (r *MySQLChatRepo) Update(chat domain.Chat) error {
+func (r *PGChatRepo) Update(chat domain.Chat) error {
 	_, err := r.db.Exec("UPDATE chats SET name = $1 WHERE id = $2", chat.Name, chat.Id)
 	return err
 }
 
-func (r *MySQLChatRepo) Delete(id string) error {
+func (r *PGChatRepo) Delete(id string) error {
 	_, err := r.db.Exec("DELETE FROM chats WHERE id = $1", id)
 	return err
 }
 
-func (r *MySQLChatRepo) Join(chatId string, userId string) error {
+func (r *PGChatRepo) Join(chatId string, userId string) error {
 	_, err := r.db.Exec("INSERT INTO chat_user (chat_id, user_id) VALUES ($1, $2)", chatId, userId)
 	return err
 }

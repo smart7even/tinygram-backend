@@ -7,17 +7,17 @@ import (
 	"github.com/smart7even/golang-do/internal/domain"
 )
 
-type MySqlEventRepo struct {
+type PGEventRepo struct {
 	db *sql.DB
 }
 
-func NewMySqlEventRepo(db *sql.DB) *MySqlEventRepo {
-	return &MySqlEventRepo{
+func NewPGEventRepo(db *sql.DB) *PGEventRepo {
+	return &PGEventRepo{
 		db: db,
 	}
 }
 
-func (r *MySqlEventRepo) Create(event domain.Event) error {
+func (r *PGEventRepo) Create(event domain.Event) error {
 	payload, jsonErr := json.Marshal(event.Payload)
 
 	if jsonErr != nil {
@@ -28,7 +28,7 @@ func (r *MySqlEventRepo) Create(event domain.Event) error {
 	return err
 }
 
-func (r *MySqlEventRepo) ReadAll() ([]domain.Event, error) {
+func (r *PGEventRepo) ReadAll() ([]domain.Event, error) {
 	rows, err := r.db.Query("SELECT id, name, description, created_at, payload FROM events")
 	if err != nil {
 		return nil, err

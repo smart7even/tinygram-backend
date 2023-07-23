@@ -10,19 +10,19 @@ import (
 	"github.com/smart7even/golang-do/internal/service"
 )
 
-type MySQLUserRepo struct {
+type PGUserRepo struct {
 	db          *sql.DB
 	firebaseApp firebase.App
 }
 
-func NewMySQLUserRepo(db *sql.DB, firebase firebase.App) service.UserRepo {
-	return &MySQLUserRepo{
+func NewPGUserRepo(db *sql.DB, firebase firebase.App) service.UserRepo {
+	return &PGUserRepo{
 		db:          db,
 		firebaseApp: firebase,
 	}
 }
 
-func (r *MySQLUserRepo) Create(token string) error {
+func (r *PGUserRepo) Create(token string) error {
 	auth, err := r.firebaseApp.Auth(context.Background())
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (r *MySQLUserRepo) Create(token string) error {
 	return createUserErr
 }
 
-func (r *MySQLUserRepo) ReadAll() ([]domain.User, error) {
+func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 	rows, err := r.db.Query("SELECT id, name FROM users")
 
 	if err != nil {
@@ -67,7 +67,7 @@ func (r *MySQLUserRepo) ReadAll() ([]domain.User, error) {
 	return users, nil
 }
 
-func (r *MySQLUserRepo) Read(id string) (domain.User, error) {
+func (r *PGUserRepo) Read(id string) (domain.User, error) {
 	row := r.db.QueryRow("SELECT id, name FROM users WHERE id = ?", id)
 
 	var user domain.User
@@ -81,7 +81,7 @@ func (r *MySQLUserRepo) Read(id string) (domain.User, error) {
 	return user, nil
 }
 
-func (r *MySQLUserRepo) ReadByToken(token string) (*domain.User, error) {
+func (r *PGUserRepo) ReadByToken(token string) (*domain.User, error) {
 	auth, err := r.firebaseApp.Auth(context.Background())
 
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *MySQLUserRepo) ReadByToken(token string) (*domain.User, error) {
 	return &domain.User{Id: firebaseUser.UID, Name: firebaseUser.DisplayName}, nil
 }
 
-func (r *MySQLUserRepo) Update(user domain.User) error {
+func (r *PGUserRepo) Update(user domain.User) error {
 
 	res, err := r.db.Exec("UPDATE users SET name = ? WHERE id = ?", user.Name, user.Id)
 
@@ -126,7 +126,7 @@ func (r *MySQLUserRepo) Update(user domain.User) error {
 	}
 }
 
-func (r *MySQLUserRepo) Delete(token string) error {
+func (r *PGUserRepo) Delete(token string) error {
 	auth, err := r.firebaseApp.Auth(context.Background())
 
 	if err != nil {

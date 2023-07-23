@@ -10,17 +10,17 @@ import (
 	"github.com/smart7even/golang-do/internal/service"
 )
 
-type MySqlMessageRepo struct {
+type PGMessageRepo struct {
 	db *sql.DB
 }
 
-func NewMySQLMessageRepo(db *sql.DB) service.MessageRepo {
-	return &MySqlMessageRepo{
+func NewPGMessageRepo(db *sql.DB) service.MessageRepo {
+	return &PGMessageRepo{
 		db: db,
 	}
 }
 
-func (r *MySqlMessageRepo) Create(message domain.Message, userId string) error {
+func (r *PGMessageRepo) Create(message domain.Message, userId string) error {
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, message.ChatId)
 	if row.Err() == nil {
 		row.Scan()
@@ -33,7 +33,7 @@ func (r *MySqlMessageRepo) Create(message domain.Message, userId string) error {
 	}
 }
 
-func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Message, error) {
+func (r *PGMessageRepo) ReadAll(chatId string, userId string) ([]domain.Message, error) {
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, chatId)
 
 	if row.Err() == nil {
@@ -58,7 +58,7 @@ func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Messa
 	}
 }
 
-func (r *MySqlMessageRepo) Update(message domain.Message, userId string) error {
+func (r *PGMessageRepo) Update(message domain.Message, userId string) error {
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, message.ChatId)
 
 	if row.Err() == nil {
@@ -69,7 +69,7 @@ func (r *MySqlMessageRepo) Update(message domain.Message, userId string) error {
 	}
 }
 
-func (r *MySqlMessageRepo) Delete(id string, userId string) error {
+func (r *PGMessageRepo) Delete(id string, userId string) error {
 	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, id)
 
 	if row.Err() == nil {
