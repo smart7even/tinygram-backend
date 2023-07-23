@@ -33,8 +33,13 @@ func initFirebase() (*firebase.App, error) {
 	return app, nil
 }
 
-func Run(dbConnectionString, httpAddress, grpcAdress string) {
-	db, err := sql.Open("mysql", dbConnectionString)
+func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
+	db, err := sql.Open("postgres", "postgres://"+dbConnectionString)
+
+	if err != nil {
+		fmt.Printf("Unable to connect to db %v", err)
+		return
+	}
 
 	todoRepo := repository.NewMySQLTodoRepo(db)
 	todoService := service.NewTodoService(todoRepo)
@@ -46,12 +51,27 @@ func Run(dbConnectionString, httpAddress, grpcAdress string) {
 		return
 	}
 
+	eventRepo := repository.NewMySqlEventRepo(db)
+	eventService := service.NewEventService(eventRepo)
+
 	userRepo := repository.NewMySQLUserRepo(db, *firebaseApp)
 	userService := service.NewUserService(userRepo)
 
+	chatRepo := repository.NewMySQLChatRepo(db)
+	chatService := service.NewChatService(chatRepo)
+
+	messageRepo := repository.NewMySQLMessageRepo(db)
+	messageService := service.NewMessageService(messageRepo, eventRepo)
+
+	authService := service.NewAuthService(secret)
+
 	services := service.Services{
-		Todo: *todoService,
-		User: *userService,
+		Todo:    *todoService,
+		User:    *userService,
+		Chat:    *chatService,
+		Message: *messageService,
+		Auth:    *authService,
+		Event:   *eventService,
 	}
 
 	if err != nil {

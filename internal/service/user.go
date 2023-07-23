@@ -10,6 +10,7 @@ type UserRepo interface {
 	Create(token string) error
 	ReadAll() ([]domain.User, error)
 	ReadByToken(token string) (*domain.User, error)
+	Read(id string) (domain.User, error)
 	Update(user domain.User) error
 	Delete(token string) error
 }
@@ -19,7 +20,7 @@ type UserDoesNotExist struct {
 }
 
 func (e UserDoesNotExist) Error() string {
-	return fmt.Sprintf("todo with id %v does not exist", e.UserId)
+	return fmt.Sprintf("user with id %v does not exist", e.UserId)
 }
 
 type UserService struct {
@@ -46,4 +47,12 @@ func (s *UserService) Update(user domain.User) error {
 
 func (s *UserService) Delete(userId string) error {
 	return s.userRepo.Delete(userId)
+}
+
+func (s *UserService) Read(token string) (domain.User, error) {
+	return s.userRepo.Read(token)
+}
+
+func (s *UserService) ReadByToken(token string) (*domain.User, error) {
+	return s.userRepo.ReadByToken(token)
 }

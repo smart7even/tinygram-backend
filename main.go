@@ -10,15 +10,19 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"github.com/smart7even/golang-do/internal/app"
 )
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Can't load .env file")
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Printf("Can't load .env file")
+		}
 	}
 }
 
@@ -26,12 +30,17 @@ func main() {
 	dbConnectionString := os.Getenv("DB_CONNECTION_STRING")
 	httpAddress := os.Getenv("HTTP_ADRESS")
 	grpcAdress := os.Getenv("GRPC_ADRESS")
+	secret := os.Getenv("SECRET")
+
+	if secret == "" {
+		log.Fatal("SECRET is not set")
+	}
 
 	time.Sleep(time.Second * 2)
 
 	m, err := migrate.New(
 		"file://migrations",
-		fmt.Sprintf("mysql://%s", dbConnectionString))
+		fmt.Sprintf("postgres://%s", dbConnectionString))
 
 	if err != nil {
 		log.Fatalf("Unable to prepare migrations: %v", err)
@@ -52,5 +61,5 @@ func main() {
 		log.Printf("Migrations to db applied")
 	}
 
-	app.Run(dbConnectionString, httpAddress, grpcAdress)
+	app.Run(dbConnectionString, httpAddress, grpcAdress, secret)
 }

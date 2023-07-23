@@ -53,3 +53,13 @@ HTTP_ADRESS=127.0.0.1:8080
 GRPC_ADRESS=127.0.0.1:8081
 DB_CONNECTION_STRING=user:password@tcp(host:port)/dbname
 ```
+
+## Useful info
+
+Create migration:
+
+migrate create -seq -ext sql -dir migrations migration_name
+
+Make migration:
+
+migrate -database mysql://{DB_CONNECTION_STRING} -path migrations up

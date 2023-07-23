@@ -67,6 +67,20 @@ func (r *MySQLUserRepo) ReadAll() ([]domain.User, error) {
 	return users, nil
 }
 
+func (r *MySQLUserRepo) Read(id string) (domain.User, error) {
+	row := r.db.QueryRow("SELECT id, name FROM users WHERE id = ?", id)
+
+	var user domain.User
+
+	err := row.Scan(&user.Id, &user.Name)
+
+	if err != nil {
+		return user, fmt.Errorf("error while getting user: %v", err)
+	}
+
+	return user, nil
+}
+
 func (r *MySQLUserRepo) ReadByToken(token string) (*domain.User, error) {
 	auth, err := r.firebaseApp.Auth(context.Background())
 
