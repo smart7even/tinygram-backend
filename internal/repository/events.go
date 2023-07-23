@@ -24,7 +24,7 @@ func (r *MySqlEventRepo) Create(event domain.Event) error {
 		return jsonErr
 	}
 
-	_, err := r.db.Exec("INSERT INTO events (id, name, description, created_at, payload) VALUES (?, ?, ?, ?, ?)", event.Id, event.Name, event.Description, event.CreatedAt, payload)
+	_, err := r.db.Exec("INSERT INTO events (id, name, description, created_at, payload) VALUES ($1, $2, $3, $4, $5)", event.Id, event.Name, event.Description, event.CreatedAt, payload)
 	return err
 }
 

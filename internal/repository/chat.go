@@ -18,7 +18,7 @@ func NewMySQLChatRepo(db *sql.DB) service.ChatRepo {
 }
 
 func (r *MySQLChatRepo) Create(chat domain.Chat) error {
-	_, err := r.db.Exec("INSERT INTO chats (id, name) VALUES (?, ?)", chat.Id, chat.Name)
+	_, err := r.db.Exec("INSERT INTO chats (id, name) VALUES ($1, $2)", chat.Id, chat.Name)
 	return err
 }
 
@@ -42,16 +42,16 @@ func (r *MySQLChatRepo) ReadAll() ([]domain.Chat, error) {
 }
 
 func (r *MySQLChatRepo) Update(chat domain.Chat) error {
-	_, err := r.db.Exec("UPDATE chats SET name = ? WHERE id = ?", chat.Name, chat.Id)
+	_, err := r.db.Exec("UPDATE chats SET name = $1 WHERE id = $2", chat.Name, chat.Id)
 	return err
 }
 
 func (r *MySQLChatRepo) Delete(id string) error {
-	_, err := r.db.Exec("DELETE FROM chats WHERE id = ?", id)
+	_, err := r.db.Exec("DELETE FROM chats WHERE id = $1", id)
 	return err
 }
 
 func (r *MySQLChatRepo) Join(chatId string, userId string) error {
-	_, err := r.db.Exec("INSERT INTO chat_user (chat_id, user_id) VALUES (?, ?)", chatId, userId)
+	_, err := r.db.Exec("INSERT INTO chat_user (chat_id, user_id) VALUES ($1, $2)", chatId, userId)
 	return err
 }

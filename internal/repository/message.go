@@ -21,12 +21,12 @@ func NewMySQLMessageRepo(db *sql.DB) service.MessageRepo {
 }
 
 func (r *MySqlMessageRepo) Create(message domain.Message, userId string) error {
-	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, message.ChatId)
+	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, message.ChatId)
 	if row.Err() == nil {
 		row.Scan()
 		message.Id = uuid.New().String()
 		message.SentAt = time.Now()
-		_, err := r.db.Exec("INSERT INTO messages (id, chat_id, user_id, text, sent_at) VALUES (?, ?, ?, ?, ?)", message.Id, message.ChatId, message.UserId, message.Text, message.SentAt)
+		_, err := r.db.Exec("INSERT INTO messages (id, chat_id, user_id, text, sent_at) VALUES ($1, $2, $3, $4, $5)", message.Id, message.ChatId, message.UserId, message.Text, message.SentAt)
 		return err
 	} else {
 		return errors.New("you are not a member of this chat")
@@ -34,10 +34,10 @@ func (r *MySqlMessageRepo) Create(message domain.Message, userId string) error {
 }
 
 func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Message, error) {
-	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, chatId)
+	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, chatId)
 
 	if row.Err() == nil {
-		rows, err := r.db.Query("SELECT messages.id, chat_id, user_id, users.name, text, sent_at FROM messages INNER JOIN users ON users.id = user_id WHERE chat_id = ? ORDER BY sent_at;", chatId)
+		rows, err := r.db.Query("SELECT messages.id, chat_id, user_id, users.name, text, sent_at FROM messages INNER JOIN users ON users.id = user_id WHERE chat_id = $1 ORDER BY sent_at;", chatId)
 		if err != nil {
 			return nil, err
 		}
@@ -59,10 +59,10 @@ func (r *MySqlMessageRepo) ReadAll(chatId string, userId string) ([]domain.Messa
 }
 
 func (r *MySqlMessageRepo) Update(message domain.Message, userId string) error {
-	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, message.ChatId)
+	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, message.ChatId)
 
 	if row.Err() == nil {
-		_, err := r.db.Exec("UPDATE messages SET text = ? WHERE id = ?", message.Text, message.Id)
+		_, err := r.db.Exec("UPDATE messages SET text = $1 WHERE id = $2", message.Text, message.Id)
 		return err
 	} else {
 		return errors.New("you are not a member of this chat")
@@ -70,10 +70,10 @@ func (r *MySqlMessageRepo) Update(message domain.Message, userId string) error {
 }
 
 func (r *MySqlMessageRepo) Delete(id string, userId string) error {
-	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = ? AND chat_id = ?", userId, id)
+	row := r.db.QueryRow("SELECT user_id, chat_id FROM chat_user WHERE user_id = $1 AND chat_id = $2", userId, id)
 
 	if row.Err() == nil {
-		_, err := r.db.Exec("DELETE FROM messages WHERE id = ?", id)
+		_, err := r.db.Exec("DELETE FROM messages WHERE id = $1", id)
 		return err
 	} else {
 		return errors.New("you are not a member of this chat")

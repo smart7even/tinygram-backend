@@ -19,7 +19,7 @@ func NewMySQLTodoRepo(db *sql.DB) service.TodoRepo {
 }
 
 func (r *MySQLTodoRepo) Create(todo domain.Todo) error {
-	_, err := r.db.Exec("INSERT INTO todos(name, complete) VALUES (?, ?)", todo.Name, todo.Complete)
+	_, err := r.db.Exec("INSERT INTO todos(name, complete) VALUES ($1, $2)", todo.Name, todo.Complete)
 
 	return err
 }
@@ -47,7 +47,7 @@ func (r *MySQLTodoRepo) ReadAll() ([]domain.Todo, error) {
 
 func (r *MySQLTodoRepo) Update(todo domain.Todo) error {
 
-	res, err := r.db.Exec("UPDATE todos SET name = ?, complete = ? WHERE id = ?", todo.Name, todo.Complete, todo.Id)
+	res, err := r.db.Exec("UPDATE todos SET name = $1, complete = $2 WHERE id = $3", todo.Name, todo.Complete, todo.Id)
 
 	if err != nil {
 		fmt.Printf("Error while editing todo: %v", err)
@@ -69,7 +69,7 @@ func (r *MySQLTodoRepo) Update(todo domain.Todo) error {
 }
 
 func (r *MySQLTodoRepo) Delete(todoId int64) error {
-	res, err := r.db.Exec("DELETE FROM todos WHERE id = ?", todoId)
+	res, err := r.db.Exec("DELETE FROM todos WHERE id = $1", todoId)
 
 	if err != nil {
 		return fmt.Errorf("error while deleting todo: %v", err)
