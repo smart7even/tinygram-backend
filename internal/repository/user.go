@@ -41,7 +41,7 @@ func (r *PGUserRepo) Create(token string) error {
 		return fmt.Errorf("error while getting user info from Firebase: %v", getUserErr)
 	}
 
-	_, createUserErr := r.db.Exec("INSERT INTO users(id, name) VALUES (?, ?)", firebaseUser.UID, firebaseUser.DisplayName)
+	_, createUserErr := r.db.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", firebaseUser.UID, firebaseUser.DisplayName)
 
 	return createUserErr
 }
@@ -68,7 +68,7 @@ func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 }
 
 func (r *PGUserRepo) Read(id string) (domain.User, error) {
-	row := r.db.QueryRow("SELECT id, name FROM users WHERE id = ?", id)
+	row := r.db.QueryRow("SELECT id, name FROM users WHERE id = $1", id)
 
 	var user domain.User
 
@@ -105,7 +105,7 @@ func (r *PGUserRepo) ReadByToken(token string) (*domain.User, error) {
 
 func (r *PGUserRepo) Update(user domain.User) error {
 
-	res, err := r.db.Exec("UPDATE users SET name = ? WHERE id = ?", user.Name, user.Id)
+	res, err := r.db.Exec("UPDATE users SET name = $1 WHERE id = $2", user.Name, user.Id)
 
 	if err != nil {
 		fmt.Printf("Error while editing user: %v", err)
@@ -139,7 +139,7 @@ func (r *PGUserRepo) Delete(token string) error {
 		return fmt.Errorf("error while verifying token: %v", err)
 	}
 
-	res, err := r.db.Exec("DELETE FROM users WHERE id = ?", authToken.UID)
+	res, err := r.db.Exec("DELETE FROM users WHERE id = $1", authToken.UID)
 
 	if err != nil {
 		return fmt.Errorf("error while deleting user: %v", err)
