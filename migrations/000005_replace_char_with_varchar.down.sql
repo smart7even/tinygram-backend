@@ -1,0 +1,1 @@
+ALTER TABLE users ALTER COLUMN name TYPE character(255);

@@ -39,6 +39,27 @@ func (h *Handler) InitAPI() *gin.Engine {
 			return
 		}
 
+		_, err = h.Services.User.Read(user.Id)
+
+		// create user if not exists
+		if errors.Is(err, service.UserDoesNotExist{UserId: user.Id}) {
+			err := h.Services.User.Create(token)
+
+			if err != nil {
+				fmt.Printf("Error while creating user: %v", err)
+				c.String(400, "Can't create user")
+				return
+			}
+
+			_, err = h.Services.User.Read(user.Id)
+
+			if err != nil {
+				fmt.Printf("Error while reading user: %v", err)
+				c.String(400, "Can't read user")
+				return
+			}
+		}
+
 		appToken, err := h.Services.Auth.Sign(user.Id)
 
 		if err != nil {

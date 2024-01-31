@@ -1,0 +1,1 @@
+ALTER TABLE users ALTER COLUMN id TYPE character(36);

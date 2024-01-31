@@ -23,6 +23,16 @@ func (e UserDoesNotExist) Error() string {
 	return fmt.Sprintf("user with id %v does not exist", e.UserId)
 }
 
+// Implement Is method for UserDoesNotExist error
+// Check if error is UserDoesNotExist and UserId is equal to target error
+func (e UserDoesNotExist) Is(target error) bool {
+	if userDoesNotExist, ok := target.(UserDoesNotExist); ok {
+		return userDoesNotExist.UserId == e.UserId
+	}
+
+	return false
+}
+
 type UserService struct {
 	userRepo UserRepo
 }

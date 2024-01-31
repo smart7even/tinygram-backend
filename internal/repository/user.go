@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	firebase "firebase.google.com/go"
 	"github.com/smart7even/golang-do/internal/domain"
@@ -41,7 +42,10 @@ func (r *PGUserRepo) Create(token string) error {
 		return fmt.Errorf("error while getting user info from Firebase: %v", getUserErr)
 	}
 
-	_, createUserErr := r.db.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", firebaseUser.UID, firebaseUser.DisplayName)
+	displayName := firebaseUser.DisplayName
+	trimmedDisplayName := strings.TrimRight(displayName, " ")
+
+	_, createUserErr := r.db.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", firebaseUser.UID, trimmedDisplayName)
 
 	return createUserErr
 }
@@ -73,6 +77,11 @@ func (r *PGUserRepo) Read(id string) (domain.User, error) {
 	var user domain.User
 
 	err := row.Scan(&user.Id, &user.Name)
+
+	// return UserDoesNotExist{UserId: id} if no rows in result
+	if err == sql.ErrNoRows {
+		return user, &service.UserDoesNotExist{UserId: id}
+	}
 
 	if err != nil {
 		return user, fmt.Errorf("error while getting user: %v", err)
