@@ -62,4 +62,4 @@ migrate create -seq -ext sql -dir migrations migration_name
 
 Make migration:
 
-migrate -database postgres://{DB_CONNECTION_STRING} -path migrations up
+migrate -database postgres://${DB_CONNECTION_STRING} -path migrations up

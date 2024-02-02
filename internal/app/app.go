@@ -63,15 +63,19 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 	messageRepo := repository.NewPGMessageRepo(db)
 	messageService := service.NewMessageService(messageRepo, eventRepo)
 
+	remindRepo := repository.NewPGReminderRepo(db)
+	remindService := service.NewReminderService(remindRepo)
+
 	authService := service.NewAuthService(secret)
 
 	services := service.Services{
-		Todo:    *todoService,
-		User:    *userService,
-		Chat:    *chatService,
-		Message: *messageService,
-		Auth:    *authService,
-		Event:   *eventService,
+		Todo:     *todoService,
+		User:     *userService,
+		Chat:     *chatService,
+		Message:  *messageService,
+		Auth:     *authService,
+		Event:    *eventService,
+		Reminder: *remindService,
 	}
 
 	if err != nil {
@@ -85,6 +89,8 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		fmt.Printf("Can't connect to db: %v", err)
 		return
 	}
+
+	go service.StartReminderChecker(remindService)
 
 	handler := http_handler.Handler{Services: services}
 	router := handler.InitAPI()

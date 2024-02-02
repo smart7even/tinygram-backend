@@ -85,6 +85,12 @@ func (h *Handler) InitAPI() *gin.Engine {
 		h.makeMessageRoutes(chatGroup)
 	}
 
+	reminderGroup := r.Group("/reminder")
+	reminderGroup.Use(h.authMiddleware)
+	{
+		h.makeReminderRoutes(reminderGroup)
+	}
+
 	return r
 }
 
