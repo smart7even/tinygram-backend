@@ -46,6 +46,12 @@ func (r *PGDeviceRepo) Read(id int, deviceId string) (domain.Device, error) {
 	return device, err
 }
 
+func (r *PGDeviceRepo) ReadByDeviceId(deviceId string) (domain.Device, error) {
+	var device domain.Device
+	err := r.db.QueryRow("SELECT id, device_id, device_token, device_os, user_id FROM devices WHERE device_id = $1", deviceId).Scan(&device.Id, &device.DeviceId, &device.DeviceToken, &device.DeviceOs, &device.UserId)
+	return device, err
+}
+
 func (r *PGDeviceRepo) Update(device *domain.Device) error {
 	// Update user_id, device_token, device_os by device_id
 	_, err := r.db.Exec("UPDATE devices SET user_id = $1, device_token = $2, device_os = $3 WHERE device_id = $4", device.UserId, device.DeviceToken, device.DeviceOs, device.DeviceId)

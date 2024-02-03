@@ -6,6 +6,7 @@ type DeviceRepo interface {
 	Create(device *domain.Device) error
 	ReadAll(userId string) ([]domain.Device, error)
 	Read(id int, deviceId string) (domain.Device, error)
+	ReadByDeviceId(deviceId string) (domain.Device, error)
 	Update(device *domain.Device) error
 	Delete(id int, userId string) error
 }
@@ -21,6 +22,17 @@ type DeviceService struct {
 }
 
 func (s *DeviceService) Create(device *domain.Device) error {
+	// First check if device with device_id already exists
+	savedDevice, err := s.deviceRepo.ReadByDeviceId(device.DeviceId)
+
+	// If device with device_id already exists, update it
+	if err == nil {
+		savedDevice.DeviceToken = device.DeviceToken
+		savedDevice.DeviceOs = device.DeviceOs
+		savedDevice.UserId = device.UserId
+		return s.deviceRepo.Update(&savedDevice)
+	}
+
 	return s.deviceRepo.Create(device)
 }
 
