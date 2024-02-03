@@ -8,6 +8,7 @@ type Services struct {
 	Auth     AuthService
 	Event    EventService
 	Reminder ReminderService
+	Device   DeviceService
 }
 
 type Deps struct {
@@ -17,4 +18,5 @@ type Deps struct {
 	MessageRepo  MessageRepo
 	EventRepo    EventRepo
 	ReminderRepo ReminderRepo
+	DeviceRepo   DeviceRepo
 }

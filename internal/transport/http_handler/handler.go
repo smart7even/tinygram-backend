@@ -91,6 +91,12 @@ func (h *Handler) InitAPI() *gin.Engine {
 		h.makeReminderRoutes(reminderGroup)
 	}
 
+	deviceGroup := r.Group("/device")
+	deviceGroup.Use(h.authMiddleware)
+	{
+		h.makeDeviceRoutes(deviceGroup)
+	}
+
 	return r
 }
 

@@ -66,6 +66,9 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 	remindRepo := repository.NewPGReminderRepo(db)
 	remindService := service.NewReminderService(remindRepo)
 
+	deviceRepo := repository.NewPGDeviceRepo(db)
+	deviceService := service.NewDeviceService(deviceRepo)
+
 	authService := service.NewAuthService(secret)
 
 	services := service.Services{
@@ -76,6 +79,7 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		Auth:     *authService,
 		Event:    *eventService,
 		Reminder: *remindService,
+		Device:   *deviceService,
 	}
 
 	if err != nil {
