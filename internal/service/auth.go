@@ -21,7 +21,7 @@ func NewAuthService(secret string) *AuthService {
 func (s *AuthService) Sign(userId string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": userId,
-		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+		"exp":    time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 
 	return token.SignedString([]byte(s.secret))

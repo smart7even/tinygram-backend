@@ -94,7 +94,7 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		return
 	}
 
-	go service.StartReminderChecker(remindService)
+	go service.StartReminderChecker(&services, firebaseApp)
 
 	handler := http_handler.Handler{Services: services}
 	router := handler.InitAPI()

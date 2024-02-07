@@ -1,9 +1,13 @@
 package service
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
+	firebase "firebase.google.com/go"
+	"firebase.google.com/go/messaging"
 	"github.com/smart7even/golang-do/internal/domain"
 )
 
@@ -14,6 +18,8 @@ type ReminderRepo interface {
 	Update(reminder domain.Reminder) error
 	Delete(id int, userId string) error
 	GetClosestReminders() ([]domain.Reminder, error)
+	CreateReminderSent(reminderSent domain.ReminderSent) error
+	ReadReminderSent(reminderId int, userId string, deviceId int) (domain.ReminderSent, error)
 }
 
 func NewReminderService(reminderRepo ReminderRepo) *ReminderService {
@@ -50,8 +56,23 @@ func (s *ReminderService) GetClosestReminders() ([]domain.Reminder, error) {
 	return s.reminderRepo.GetClosestReminders()
 }
 
-func StartReminderChecker(reminderService *ReminderService) {
+func (s *ReminderService) CreateReminderSent(reminderSent domain.ReminderSent) error {
+	return s.reminderRepo.CreateReminderSent(reminderSent)
+}
+
+func (s *ReminderService) ReadReminderSent(reminderId int, userId string, deviceId int) (domain.ReminderSent, error) {
+	return s.reminderRepo.ReadReminderSent(reminderId, userId, deviceId)
+}
+
+func StartReminderChecker(s *Services, firebaseApp *firebase.App) {
 	fmt.Println("Starting reminder checker")
+
+	client, err := firebaseApp.Messaging(context.Background())
+
+	if err != nil {
+		fmt.Printf("Error while getting Firebase Cloud Messaging client: %v", err)
+		return
+	}
 
 	ticker := time.NewTicker(10 * time.Second) // Check every 10 seconds
 	quit := make(chan struct{})
@@ -59,7 +80,7 @@ func StartReminderChecker(reminderService *ReminderService) {
 		for {
 			select {
 			case <-ticker.C:
-				checkReminders(reminderService)
+				checkReminders(s, firebaseApp, client)
 			case <-quit:
 				ticker.Stop()
 				return
@@ -68,8 +89,8 @@ func StartReminderChecker(reminderService *ReminderService) {
 	}()
 }
 
-func checkReminders(reminderService *ReminderService) {
-	reminders, err := reminderService.GetClosestReminders()
+func checkReminders(s *Services, firebaseApp *firebase.App, client *messaging.Client) {
+	reminders, err := s.Reminder.GetClosestReminders()
 	if err != nil {
 		return
 	}
@@ -79,5 +100,75 @@ func checkReminders(reminderService *ReminderService) {
 
 		// Print reminder to console
 		fmt.Printf("Reminder: %v\n", reminder)
+
+		timeUntilReminder := time.Until(reminder.RemindAt)
+
+		// Print time until reminder to console
+		fmt.Printf("Time until reminder: %v\n", timeUntilReminder)
+
+		// If reminder is 1 minute away, send push notification
+		if timeUntilReminder < time.Minute {
+			// Get devices for user
+			devices, err := s.Device.ReadAll(reminder.UserId)
+
+			if err != nil {
+				fmt.Printf("Error while getting devices for user: %v", err)
+				return
+			}
+
+			// Send push notification to each device
+			for _, device := range devices {
+				// Check if reminder was already sent to this device
+				reminderSent, err := s.Reminder.ReadReminderSent(reminder.Id, reminder.UserId, device.Id)
+
+				if err != nil && err != sql.ErrNoRows {
+					fmt.Printf("Error while reading reminder sent: %v", err)
+					return
+				}
+
+				if reminderSent.Id != 0 {
+					fmt.Printf("Reminder already sent to device: %v\n", device)
+					continue
+				}
+
+				// Send push notification
+				fmt.Printf("Sending push notification to device: %v\n", device)
+
+				message := &messaging.Message{
+					Data: map[string]string{
+						"reminder_id": fmt.Sprintf("%v", reminder.Id),
+					},
+					Notification: &messaging.Notification{
+						Title: reminder.Name,
+						Body:  reminder.Description,
+					},
+					Token: device.DeviceToken,
+				}
+
+				_, err = client.Send(context.Background(), message)
+
+				if err != nil {
+					fmt.Printf("Error while sending push notification: %v", err)
+					return
+				}
+
+				// Create reminder sent
+				reminderSent = domain.ReminderSent{
+					ReminderId: reminder.Id,
+					UserId:     reminder.UserId,
+					DeviceId:   device.Id,
+					SentAt:     time.Now(),
+				}
+
+				err = s.Reminder.CreateReminderSent(reminderSent)
+
+				if err != nil {
+					fmt.Printf("Error while creating reminder sent: %v", err)
+					return
+				}
+
+				fmt.Printf("Reminder sent: %v\n", reminderSent)
+			}
+		}
 	}
 }
