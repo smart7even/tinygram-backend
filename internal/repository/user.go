@@ -64,7 +64,19 @@ func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 
 	for rows.Next() {
 		var user domain.User
-		rows.Scan(&user.Id, &user.Name, &user.AvatarUrl)
+		var avatarUrl sql.NullString
+
+		err := rows.Scan(&user.Id, &user.Name, &avatarUrl)
+
+		if err != nil {
+			fmt.Printf("Error while scanning user: %v", err)
+			return nil, err
+		}
+
+		if avatarUrl.Valid {
+			user.AvatarUrl = avatarUrl.String
+		}
+
 		users = append(users, user)
 	}
 
@@ -74,9 +86,7 @@ func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 func (r *PGUserRepo) Read(id string) (domain.User, error) {
 	row := r.db.QueryRow("SELECT id, name, avatarurl FROM users WHERE id = $1", id)
 
-	var user domain.User
-
-	err := row.Scan(&user.Id, &user.Name, &user.AvatarUrl)
+	user, err := scanUser(row)
 
 	// return UserDoesNotExist{UserId: id} if no rows in result
 	if err == sql.ErrNoRows {
@@ -165,4 +175,16 @@ func (r *PGUserRepo) Delete(token string) error {
 	} else {
 		return &service.UserDoesNotExist{UserId: authToken.UID}
 	}
+}
+
+func scanUser(row *sql.Row) (domain.User, error) {
+	var user domain.User
+	var avatarUrl sql.NullString
+	err := row.Scan(&user.Id, &user.Name, &avatarUrl)
+
+	if avatarUrl.Valid {
+		user.AvatarUrl = avatarUrl.String
+	}
+
+	return user, err
 }

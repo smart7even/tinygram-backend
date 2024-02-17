@@ -1,7 +1,7 @@
 package domain
 
 type User struct {
-	Id        string
-	Name      string
-	AvatarUrl string
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
 }
