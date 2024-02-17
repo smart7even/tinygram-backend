@@ -39,7 +39,7 @@ func (h *Handler) InitAPI() *gin.Engine {
 			return
 		}
 
-		_, err = h.Services.User.Read(user.Id)
+		appUser, err := h.Services.User.Read(user.Id)
 
 		// create user if not exists
 		if errors.Is(err, service.UserDoesNotExist{UserId: user.Id}) {
@@ -51,7 +51,7 @@ func (h *Handler) InitAPI() *gin.Engine {
 				return
 			}
 
-			_, err = h.Services.User.Read(user.Id)
+			appUser, err = h.Services.User.Read(user.Id)
 
 			if err != nil {
 				fmt.Printf("Error while reading user: %v", err)
@@ -70,6 +70,7 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 		c.JSON(200, gin.H{
 			"token": appToken,
+			"user":  appUser,
 		})
 	})
 
