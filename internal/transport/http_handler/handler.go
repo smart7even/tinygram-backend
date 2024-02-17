@@ -60,6 +60,18 @@ func (h *Handler) InitAPI() *gin.Engine {
 			}
 		}
 
+		// if user has avatar and appUser doesn't have it - update appUser
+		if user.AvatarUrl != "" && appUser.AvatarUrl == "" {
+			appUser.AvatarUrl = user.AvatarUrl
+			err := h.Services.User.Update(appUser)
+
+			if err != nil {
+				fmt.Printf("Error while updating user: %v", err)
+				c.String(400, "Can't update user")
+				return
+			}
+		}
+
 		appToken, err := h.Services.Auth.Sign(user.Id)
 
 		if err != nil {
