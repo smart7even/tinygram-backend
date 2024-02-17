@@ -1,0 +1,49 @@
+---
+- name: Create migration
+  hosts: localhost
+  vars:
+    migration_name: "migration_name_here"
+  tasks:
+    - name: Run migration command
+      ansible.builtin.shell:
+        cmd: "migrate create -seq -ext sql -dir migrations {{ migration_name }}"
+      args:
+        chdir: "./"
+        executable: /bin/bash
+  tags:
+    - create_migration
+
+- name: Run migration
+  hosts: localhost
+  tasks:
+    - name: Read .env file
+      ansible.builtin.slurp:
+        src: ".env"
+      register: env_file
+
+    - name: Decode .env content
+      set_fact:
+        env_content: "{{ env_file['content'] | b64decode }}"
+
+    - name: Debug env_content
+      ansible.builtin.debug:
+        var: env_content
+
+    - name: Convert .env content to list
+      set_fact:
+        env_vars_list: "{{ env_content | regex_findall('^(\\w+)=(.*)$', multiline=True) }}"
+    - name: Convert env_vars to dictionary
+      set_fact:
+        env_vars: "{{ env_vars | default({}) | combine({item[0]: item[1]}) }}"
+      loop: "{{ env_vars_list }}"
+    - name: Debug env_vars
+      ansible.builtin.debug:
+        var: env_vars
+    - name: Run migration command
+      ansible.builtin.shell:
+        cmd: "migrate -database postgres://{{env_vars['DB_CONNECTION_STRING']}} -path migrations up"
+      args:
+        chdir: "./"
+        executable: /bin/bash
+  tags:
+    - run_migration

@@ -58,8 +58,12 @@ DB_CONNECTION_STRING=user:password@tcp(host:port)/dbname
 
 Create migration:
 
-migrate create -seq -ext sql -dir migrations migration_name
+```
+ansible-playbook playbook.yml -e "migration_name=migration_name" --tags create_migration
+```
 
 Make migration:
 
-migrate -database postgres://${DB_CONNECTION_STRING} -path migrations up
+```
+ansible-playbook playbook.yml --tags run_migration
+```
