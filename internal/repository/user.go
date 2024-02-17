@@ -45,13 +45,13 @@ func (r *PGUserRepo) Create(token string) error {
 	displayName := firebaseUser.DisplayName
 	trimmedDisplayName := strings.TrimRight(displayName, " ")
 
-	_, createUserErr := r.db.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", firebaseUser.UID, trimmedDisplayName)
+	_, createUserErr := r.db.Exec("INSERT INTO users(id, name, avatarurl) VALUES ($1, $2)", firebaseUser.UID, trimmedDisplayName, firebaseUser.PhotoURL)
 
 	return createUserErr
 }
 
 func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
-	rows, err := r.db.Query("SELECT id, name FROM users")
+	rows, err := r.db.Query("SELECT id, name, avatarurl FROM users")
 
 	if err != nil {
 		fmt.Printf("Error while requesting users: %v", err)
@@ -64,7 +64,7 @@ func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 
 	for rows.Next() {
 		var user domain.User
-		rows.Scan(&user.Id, &user.Name)
+		rows.Scan(&user.Id, &user.Name, &user.AvatarUrl)
 		users = append(users, user)
 	}
 
@@ -72,11 +72,11 @@ func (r *PGUserRepo) ReadAll() ([]domain.User, error) {
 }
 
 func (r *PGUserRepo) Read(id string) (domain.User, error) {
-	row := r.db.QueryRow("SELECT id, name FROM users WHERE id = $1", id)
+	row := r.db.QueryRow("SELECT id, name, avatarurl FROM users WHERE id = $1", id)
 
 	var user domain.User
 
-	err := row.Scan(&user.Id, &user.Name)
+	err := row.Scan(&user.Id, &user.Name, &user.AvatarUrl)
 
 	// return UserDoesNotExist{UserId: id} if no rows in result
 	if err == sql.ErrNoRows {
@@ -109,12 +109,12 @@ func (r *PGUserRepo) ReadByToken(token string) (*domain.User, error) {
 		return nil, fmt.Errorf("error while getting user info from Firebase: %v", getUserErr)
 	}
 
-	return &domain.User{Id: firebaseUser.UID, Name: firebaseUser.DisplayName}, nil
+	return &domain.User{Id: firebaseUser.UID, Name: firebaseUser.DisplayName, AvatarUrl: firebaseUser.PhotoURL}, nil
 }
 
 func (r *PGUserRepo) Update(user domain.User) error {
 
-	res, err := r.db.Exec("UPDATE users SET name = $1 WHERE id = $2", user.Name, user.Id)
+	res, err := r.db.Exec("UPDATE users SET name = $1, avatarurl = $2 WHERE id = $3", user.Name, user.AvatarUrl, user.Id)
 
 	if err != nil {
 		fmt.Printf("Error while editing user: %v", err)
