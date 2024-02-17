@@ -45,7 +45,7 @@ func (r *PGUserRepo) Create(token string) error {
 	displayName := firebaseUser.DisplayName
 	trimmedDisplayName := strings.TrimRight(displayName, " ")
 
-	_, createUserErr := r.db.Exec("INSERT INTO users(id, name, avatarurl) VALUES ($1, $2)", firebaseUser.UID, trimmedDisplayName, firebaseUser.PhotoURL)
+	_, createUserErr := r.db.Exec("INSERT INTO users(id, name, avatarurl) VALUES ($1, $2, $3)", firebaseUser.UID, trimmedDisplayName, firebaseUser.PhotoURL)
 
 	return createUserErr
 }
