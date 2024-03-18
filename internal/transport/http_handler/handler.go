@@ -194,12 +194,17 @@ func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 }
 
 func (h *Handler) makeUsersRoutes(r *gin.RouterGroup) {
-	r.POST("/", func(c *gin.Context) {
+	r.POST("", func(c *gin.Context) {
+		firebaseToken := c.Request.Header.Get("Firebase-Token")
 		token := c.Request.Header.Get("token")
 
-		if token == "" {
+		if token == "" && firebaseToken == "" {
 			c.String(400, "Token is required")
 			return
+		}
+
+		if firebaseToken != "" {
+			token = firebaseToken
 		}
 
 		err := h.Services.User.Create(token)
@@ -213,7 +218,7 @@ func (h *Handler) makeUsersRoutes(r *gin.RouterGroup) {
 		c.String(200, "User created")
 	})
 
-	r.GET("/", func(c *gin.Context) {
+	r.GET("", func(c *gin.Context) {
 		users, err := h.Services.User.ReadAll()
 
 		if err != nil {
@@ -226,7 +231,7 @@ func (h *Handler) makeUsersRoutes(r *gin.RouterGroup) {
 		c.JSON(200, users)
 	})
 
-	r.DELETE("/", func(c *gin.Context) {
+	r.DELETE("", func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 
 		if token == "" {
