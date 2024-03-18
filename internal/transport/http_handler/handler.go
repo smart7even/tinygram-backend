@@ -24,14 +24,14 @@ func (h *Handler) InitAPI() *gin.Engine {
 	h.makeTodosRoutes(r)
 
 	r.POST("/auth/token", func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
+		token := ReadFirebaseToken(c)
 
-		if token == "" {
+		if token == nil {
 			c.String(400, "Token is required")
 			return
 		}
 
-		user, err := h.Services.User.ReadByToken(token)
+		user, err := h.Services.User.ReadByToken(*token)
 
 		if err != nil {
 			fmt.Printf("Error while reading user: %v", err)
@@ -43,7 +43,7 @@ func (h *Handler) InitAPI() *gin.Engine {
 
 		// create user if not exists
 		if errors.Is(err, service.UserDoesNotExist{UserId: user.Id}) {
-			err := h.Services.User.Create(token)
+			err := h.Services.User.Create(*token)
 
 			if err != nil {
 				fmt.Printf("Error while creating user: %v", err)
@@ -193,21 +193,31 @@ func (h *Handler) makeTodosRoutes(r *gin.Engine) {
 
 }
 
+func ReadFirebaseToken(c *gin.Context) *string {
+	firebaseToken := c.Request.Header.Get("firebase-token")
+	token := c.Request.Header.Get("token")
+
+	if token == "" && firebaseToken == "" {
+		return nil
+	}
+
+	if firebaseToken != "" {
+		token = firebaseToken
+	}
+
+	return &token
+}
+
 func (h *Handler) makeUsersRoutes(r *gin.RouterGroup) {
 	r.POST("", func(c *gin.Context) {
-		firebaseToken := c.Request.Header.Get("Firebase-Token")
-		token := c.Request.Header.Get("token")
+		token := ReadFirebaseToken(c)
 
-		if token == "" && firebaseToken == "" {
+		if token == nil {
 			c.String(400, "Token is required")
 			return
 		}
 
-		if firebaseToken != "" {
-			token = firebaseToken
-		}
-
-		err := h.Services.User.Create(token)
+		err := h.Services.User.Create(*token)
 
 		if err != nil {
 			fmt.Printf("Error while creating user: %v", err)
