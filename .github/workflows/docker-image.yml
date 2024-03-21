@@ -22,5 +22,5 @@ jobs:
     
     - name: 'Build and Push Backend Image'
       run: |
-        docker build . --tag ghcr.io/smart7even/backend:latest
+        docker build --cache-from ghcr.io/smart7even/backend:latest . --tag ghcr.io/smart7even/backend:latest
         docker push ghcr.io/smart7even/backend:latest
