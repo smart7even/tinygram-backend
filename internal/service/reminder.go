@@ -88,7 +88,7 @@ func StartReminderChecker(s *Services, firebaseApp *firebase.App) {
 		for {
 			select {
 			case <-ticker.C:
-				checkReminders(s, firebaseApp, client)
+				checkReminders(s, client)
 			case <-quit:
 				ticker.Stop()
 				return
@@ -97,7 +97,7 @@ func StartReminderChecker(s *Services, firebaseApp *firebase.App) {
 	}()
 }
 
-func checkReminders(s *Services, firebaseApp *firebase.App, client *messaging.Client) {
+func checkReminders(s *Services, client *messaging.Client) {
 	reminders, err := s.Reminder.GetClosestReminders()
 	if err != nil {
 		return
