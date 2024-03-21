@@ -82,11 +82,6 @@ func Run(dbConnectionString, httpAddress, grpcAdress, secret string) {
 		Device:   *deviceService,
 	}
 
-	if err != nil {
-		fmt.Printf("Can't prepare driver to connect to db: %v", err)
-		return
-	}
-
 	defer db.Close()
 
 	if err = db.Ping(); err != nil {

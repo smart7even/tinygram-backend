@@ -57,14 +57,14 @@ func (h *Handler) makeReminderRoutes(r *gin.RouterGroup) {
 
 		reminder.UserId = user.Id
 
-		err := h.Services.Reminder.Create(reminder)
+		createdReminder, err := h.Services.Reminder.Create(reminder)
 
 		if err != nil {
 			c.String(400, "Can't create reminder")
 			return
 		}
 
-		c.String(200, "Reminder created")
+		c.JSON(200, createdReminder)
 	})
 
 	// Handle PUT requests

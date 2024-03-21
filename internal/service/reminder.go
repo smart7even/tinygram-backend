@@ -12,7 +12,7 @@ import (
 )
 
 type ReminderRepo interface {
-	Create(reminder domain.Reminder) error
+	Create(reminder domain.Reminder) (int, error)
 	ReadAll(userId string) ([]domain.Reminder, error)
 	Read(id int, userId string) (domain.Reminder, error)
 	Update(reminder domain.Reminder) error
@@ -32,8 +32,16 @@ type ReminderService struct {
 	reminderRepo ReminderRepo
 }
 
-func (s *ReminderService) Create(reminder domain.Reminder) error {
-	return s.reminderRepo.Create(reminder)
+func (s *ReminderService) Create(reminder domain.Reminder) (*domain.Reminder, error) {
+	id, err := s.reminderRepo.Create(reminder)
+
+	if err != nil {
+		return nil, err
+	}
+
+	reminder.Id = id
+
+	return &reminder, nil
 }
 
 func (s *ReminderService) ReadAll(userId string) ([]domain.Reminder, error) {

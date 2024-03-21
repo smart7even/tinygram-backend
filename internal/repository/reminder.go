@@ -16,9 +16,10 @@ func NewPGReminderRepo(db *sql.DB) *PGReminderRepo {
 	}
 }
 
-func (r *PGReminderRepo) Create(reminder domain.Reminder) error {
-	_, err := r.db.Exec("INSERT INTO reminders (user_id, name, description, remind_at, created_at) VALUES ($1, $2, $3, $4, $5)", reminder.UserId, reminder.Name, reminder.Description, reminder.RemindAt, reminder.CreatedAt)
-	return err
+func (r *PGReminderRepo) Create(reminder domain.Reminder) (int, error) {
+	lastInsertedId := 0
+	err := r.db.QueryRow("INSERT INTO reminders (user_id, name, description, remind_at, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id", reminder.UserId, reminder.Name, reminder.Description, reminder.RemindAt, reminder.CreatedAt).Scan(&lastInsertedId)
+	return lastInsertedId, err
 }
 
 func (r *PGReminderRepo) ReadAll(userId string) ([]domain.Reminder, error) {
