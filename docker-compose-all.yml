@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  traefik:
+    image: "traefik:v2.6"
+    container_name: "traefik"
+    ports:
+      - "443:443"
+      - "8080:8080"
+    command:
+      - "--log.level=DEBUG"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=smart7even@yandex.ru"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: todolist
+    ports:
+      - "3306"
+  backend:
+    build: .
+    restart: always
+    environment:
+      - SECRET=${SECRET}
+      - HTTP_ADRESS=${HTTP_ADRESS}
+      - GRPC_ADRESS=:8081
+      - DB_CONNECTION_STRING=${DB_USER}:${DB_PASS}@tcp(db:3306)/todolist
+      - ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.bot.loadbalancer.server.port=443"
+      - "traefik.http.routers.bot.rule=Host(`upliftingpark.com`)"
+      - "traefik.http.routers.bot.entrypoints=websecure"
+      - "traefik.http.routers.bot.tls.certresolver=myresolver"
