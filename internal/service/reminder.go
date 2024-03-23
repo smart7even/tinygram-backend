@@ -131,7 +131,7 @@ func checkReminders(s *Services, client *messaging.Client) {
 
 				if err != nil && err != sql.ErrNoRows {
 					fmt.Printf("Error while reading reminder sent: %v", err)
-					return
+					continue
 				}
 
 				if reminderSent.Id != 0 {
@@ -157,7 +157,8 @@ func checkReminders(s *Services, client *messaging.Client) {
 
 				if err != nil {
 					fmt.Printf("Error while sending push notification: %v", err)
-					return
+					// TODO: if token is invalid, set device as inactive
+					continue
 				}
 
 				// Create reminder sent
@@ -172,7 +173,7 @@ func checkReminders(s *Services, client *messaging.Client) {
 
 				if err != nil {
 					fmt.Printf("Error while creating reminder sent: %v", err)
-					return
+					continue
 				}
 
 				fmt.Printf("Reminder sent: %v\n", reminderSent)
